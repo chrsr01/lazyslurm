@@ -13,7 +13,7 @@
 </p>
 
 <p align="center">
-  <video src="https://github.com/hill/lazyslurm/raw/master/media/demo.mp4" controls muted width="860"></video>
+  <a href="media/demo.mp4"><img src="media/demo.gif" alt="lazyslurm demo" width="860"></a>
 </p>
 
 ## Why This Exists
