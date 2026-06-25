@@ -5,16 +5,8 @@ use std::sync::Mutex;
 
 use crate::slurm::executor::SlurmExecutor;
 
-/// A fake [`SlurmExecutor`] that reads canned outputs from a fixture directory.
-///
-/// Layout:
-/// ```text
-/// <fixture_dir>/
-///   squeue.txt              # squeue output for any user/partition filter
-///   scontrol/<job_id>.txt   # one file per job_id
-/// ```
-///
-/// `scancel` calls are recorded in [`Self::cancelled`] for test assertions.
+/// A fake [`SlurmExecutor`] reading canned outputs from a fixture directory
+/// (`squeue.txt`, `scontrol/<id>.txt`, etc). Records `scancel` ids for tests.
 pub struct SlurmFixture {
     pub fixture_dir: PathBuf,
     pub cancelled: Mutex<Vec<String>>,
@@ -49,5 +41,32 @@ impl SlurmExecutor for SlurmFixture {
     async fn scancel(&self, job_id: &str) -> Result<()> {
         self.cancelled.lock().unwrap().push(job_id.to_string());
         Ok(())
+    }
+
+    async fn sinfo_nodes(&self) -> Result<String> {
+        let path = self.fixture_dir.join("sinfo_nodes.txt");
+        std::fs::read_to_string(&path)
+            .with_context(|| format!("Failed to read fixture: {}", path.display()))
+    }
+
+    async fn sinfo_partitions(&self) -> Result<String> {
+        let path = self.fixture_dir.join("sinfo_partitions.txt");
+        std::fs::read_to_string(&path)
+            .with_context(|| format!("Failed to read fixture: {}", path.display()))
+    }
+
+    async fn sacct(&self, _user: Option<&str>) -> Result<String> {
+        let path = self.fixture_dir.join("sacct.txt");
+        std::fs::read_to_string(&path)
+            .with_context(|| format!("Failed to read fixture: {}", path.display()))
+    }
+
+    async fn sacct_job(&self, job_id: &str) -> Result<String> {
+        let path = self
+            .fixture_dir
+            .join("sacct_job")
+            .join(format!("{}.txt", job_id));
+        std::fs::read_to_string(&path)
+            .with_context(|| format!("Failed to read fixture: {}", path.display()))
     }
 }
