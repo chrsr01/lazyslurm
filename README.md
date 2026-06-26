@@ -24,7 +24,7 @@ Built in Rust with [ratatui](https://ratatui.rs/) and released as a single binar
 
 ## Features
 
-- Monitor your jobs with love log tailing, job details and ability to cancel jobs
+- Monitor your jobs with live log tailing, job details and ability to cancel jobs
 - See per-node state, CPU load, free memory and GPU (gres) allocation across the cluster
 - Partition availability, idle/allocated nodes and time limits.
 - See finished jobs from `sacct` with details
