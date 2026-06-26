@@ -1,11 +1,6 @@
 # Release & Distribution
 
-This directory contains files related to distributing LazySlurm.
-
-## Directory Structure
-
-- `packaging/` - Future: RPM/DEB package specs
-- `scripts/` - Future: Installation scripts
+How LazySlurm is released and distributed.
 
 The Homebrew formula lives in its own tap repo,
 [hill/homebrew-tap](https://github.com/hill/homebrew-tap), not here. It is
@@ -13,7 +8,7 @@ regenerated automatically on every release (see below).
 
 ## Release Process
 
-Run a single command:
+Update `CHANGELOG.md` first, then run a single command:
 
 ```bash
 just release 0.3.0     # or: patch | minor | major
@@ -28,10 +23,9 @@ This will:
 4. Wait for the binaries to land, then regenerate the Homebrew formula in the
    tap with the new version, URLs, and SHA256 hashes, and push it
 
-Update `CHANGELOG.md` before releasing, since `just release` does not touch it.
-
-If the tap step is interrupted (it polls CI for a couple of minutes), re-run it
-on its own once the build finishes:
+Run it from your own machine. The tap update uses your local `gh` and SSH auth
+to push to `homebrew-tap`. If that step is interrupted (it polls CI for a couple
+of minutes), re-run it on its own once the build finishes:
 
 ```bash
 just update-tap 0.3.0
