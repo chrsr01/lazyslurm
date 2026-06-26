@@ -3,13 +3,13 @@
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.0] - 2026-06-26
 
 ### Added
-- Cross-platform GitHub Actions CI/CD pipeline
-- Automated binary releases for Linux, macOS, and Windows
-- Homebrew formula
-- README with installation instructions
+- New aesthetic redesign
+- Tab views for Jobs, History, Partitions, and Nodes
+- Expand panels to full screen, or raw mode for easy text copying
+- Job history via `sacct`
 
 ## [0.1.0] - 2025-09-05
 

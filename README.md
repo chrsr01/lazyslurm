@@ -18,17 +18,16 @@
 
 ## Why This Exists
 
-Slurm's CLI is powerful but clunky for monitoring. This gives you the lazygit experience for your cluster. Built in Rust with [ratatui](https://ratatui.rs/) because a single static binary is beautiful on HPC systems.
+Slurm's CLI is powerful but clunky for monitoring.
+This gives you the lazygit experience for your cluster.
+Built in Rust with [ratatui](https://ratatui.rs/) and released as a single binary.
 
 ## Features
 
-- **Tabbed views**: `Jobs`, `Nodes`, `Partitions`, and `History`, switchable with `Tab` or the number keys (and clickable).
-- **Jobs**: live log tailing, job details, and one-key cancel. Filter the list by name or id as you type, and pin the jobs you care about to the top.
-- **Nodes**: per-node state, CPU load, free memory, and GPU (gres) allocation across the cluster.
-- **Partitions**: availability, idle/allocated node counts, and time limits.
-- **History**: finished jobs from `sacct`, with a detail view showing requested vs actual peak memory, exit codes, and a best-effort log tail.
-- **Raw log view**: drop to a plain, borderless log so your terminal's own selection works for copying.
-- **Single binary**: no runtime dependencies, perfect for HPC environments.
+- Monitor your jobs with love log tailing, job details and ability to cancel jobs
+- See per-node state, CPU load, free memory and GPU (gres) allocation across the cluster
+- Partition availability, idle/allocated nodes and time limits.
+- See finished jobs from `sacct` with details
 
 ## Installation
 
