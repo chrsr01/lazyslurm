@@ -94,3 +94,12 @@ release version="patch":
     git push --tags
 
     echo "Release v${new_ver} pushed. GitHub Actions will build and upload binaries."
+
+    # Wait for CI to publish binaries, then update the Homebrew tap formula.
+    # If interrupted, re-run with: just update-tap ${new_ver}
+    just update-tap "${new_ver}"
+
+# Update the Homebrew tap formula for a released version (waits for CI binaries)
+# Usage: just update-tap 0.3.0
+update-tap version:
+    python3 scripts/update_tap.py "{{version}}"

@@ -4,58 +4,49 @@ This directory contains files related to distributing LazySlurm.
 
 ## Directory Structure
 
-- `homebrew/` - Homebrew formula for macOS/Linux installation
 - `packaging/` - Future: RPM/DEB package specs
 - `scripts/` - Future: Installation scripts
 
+The Homebrew formula lives in its own tap repo,
+[hill/homebrew-tap](https://github.com/hill/homebrew-tap), not here. It is
+regenerated automatically on every release (see below).
+
 ## Release Process
 
-### 1. Create a Release
-
-1. Update version in `Cargo.toml`
-2. Update `CHANGELOG.md` with changes
-3. Create and push a git tag:
-   ```bash
-   git tag v0.1.0
-   git push origin v0.1.0
-   ```
-4. GitHub Actions will automatically:
-   - Build cross-platform binaries
-   - Create GitHub release
-   - Upload binary assets
-   - Publish to crates.io
-
-### 2. Update Homebrew Formula
-
-After a successful release:
-
-1. Update URLs and SHA256 hashes in `homebrew/lazyslurm.rb`
-2. Test the formula locally:
-   ```bash
-   brew install --build-from-source ./release/homebrew/lazyslurm.rb
-   ```
-3. Submit to homebrew-core or create a tap
-
-### 3. Distribution Checklist
-
-- [ ] GitHub release with binaries
-- [ ] Published to crates.io
-- [ ] Homebrew formula updated
-- [ ] README installation instructions updated
-- [ ] Test installations on different platforms
-
-## Homebrew Tap (Future)
-
-To create your own tap:
+Run a single command:
 
 ```bash
-# Create tap repository
-gh repo create homebrew-tap --public
+just release 0.3.0     # or: patch | minor | major
+```
 
-# Add formula
-cp release/homebrew/lazyslurm.rb /path/to/homebrew-tap/Formula/
+This will:
 
-# Users install with:
-brew tap hill/tap
-brew install lazyslurm
+1. Bump the version in `Cargo.toml` and refresh `Cargo.lock`
+2. Commit, tag `vX.Y.Z`, and push
+3. GitHub Actions builds cross-platform binaries, creates the GitHub release,
+   uploads assets, and publishes to crates.io
+4. Wait for the binaries to land, then regenerate the Homebrew formula in the
+   tap with the new version, URLs, and SHA256 hashes, and push it
+
+Update `CHANGELOG.md` before releasing, since `just release` does not touch it.
+
+If the tap step is interrupted (it polls CI for a couple of minutes), re-run it
+on its own once the build finishes:
+
+```bash
+just update-tap 0.3.0
+```
+
+## Distribution Checklist
+
+- [ ] `CHANGELOG.md` updated
+- [ ] GitHub release with binaries
+- [ ] Published to crates.io
+- [ ] Homebrew tap formula updated (automatic)
+- [ ] README installation instructions current
+
+## Installing from the tap
+
+```bash
+brew install hill/tap/lazyslurm
 ```
