@@ -83,7 +83,7 @@ pub fn render_app(frame: &mut Frame, app: &App) {
             let Some(target) = &app.cancel_target else {
                 return;
             };
-            let popup_area = centered_rect(36, 7, frame.area());
+            let popup_area = centered_rect_fixed(44, 7, frame.area());
             frame.render_widget(Clear, popup_area);
 
             let body = vec![
@@ -113,7 +113,7 @@ pub fn render_app(frame: &mut Frame, app: &App) {
                             .fg(theme::FAILED)
                             .add_modifier(Modifier::BOLD),
                     ),
-                    Span::styled(" cancel", Style::default().fg(theme::MUTED)),
+                    Span::styled(" reject", Style::default().fg(theme::MUTED)),
                 ]),
             ];
 
@@ -1449,6 +1449,20 @@ fn truncate(s: &str, max_len: usize) -> String {
     } else {
         let keep: String = s.chars().take(max_len.saturating_sub(3)).collect();
         format!("{keep}...")
+    }
+}
+
+/// Center a rect of fixed cell dimensions, clamped to the available area.
+/// Use this for small popups whose content has a known size, so they don't
+/// collapse on short terminals the way percentage sizing does.
+fn centered_rect_fixed(width: u16, height: u16, r: Rect) -> Rect {
+    let w = width.min(r.width);
+    let h = height.min(r.height);
+    Rect {
+        x: r.x + r.width.saturating_sub(w) / 2,
+        y: r.y + r.height.saturating_sub(h) / 2,
+        width: w,
+        height: h,
     }
 }
 

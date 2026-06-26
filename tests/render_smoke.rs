@@ -231,6 +231,24 @@ fn pinned_job_shows_star_marker() {
 }
 
 #[test]
+fn cancel_popup_shows_confirm_help_inside_window() {
+    use lazyslurm::models::{Job, JobState};
+    let mut app = App::new();
+    app.cancel_target = Some(Job::new(
+        "44".into(),
+        "train".into(),
+        "u".into(),
+        JobState::Running,
+    ));
+    app.state = AppState::CancelJobPopup;
+
+    let text = rendered_text(&app);
+    assert!(text.contains("Cancel job"), "popup prompt shown");
+    assert!(text.contains("44"), "target job id shown");
+    assert!(text.contains("confirm"), "y/n help shown inside the popup");
+}
+
+#[test]
 fn raw_log_view_shows_plain_log() {
     use std::io::Write;
 
