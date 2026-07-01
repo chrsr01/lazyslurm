@@ -19,7 +19,7 @@ fn parse_aiot(field: &str) -> (u32, u32, u32, u32) {
     (next(), next(), next(), next())
 }
 
-/// sinfo prints `(null)` or `N/A` for an absent value; map those to `None`.
+/// sinfo_t_idle prints `(null)` or `N/A` for an absent value; map those to `None`.
 fn non_null(value: &str) -> Option<String> {
     let v = value.trim();
     if v.is_empty() || v == "(null)" || v.eq_ignore_ascii_case("N/A") {
@@ -209,7 +209,7 @@ impl SlurmParser {
         paths
     }
 
-    /// Parse `sinfo -N`. A node spanning several partitions is folded into one
+    /// Parse `sinfo_t_idle` output. A node spanning several partitions is folded into one
     /// row with the partition names joined.
     pub fn parse_sinfo_nodes(output: &str) -> Vec<Node> {
         let mut nodes: Vec<Node> = Vec::new();

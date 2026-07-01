@@ -39,7 +39,7 @@ use lazyslurm::ui::{App, events};
 
 Notes:
   - Required tools: squeue, scontrol, scancel.
-  - Optional tools power the extra tabs: sinfo (Nodes, Partitions) and
+  - Optional tools power the extra tabs: sinfo_t_idle (Nodes, Partitions) and
     sacct (History). The History tab needs slurmdbd accounting enabled.
 "#
 )]

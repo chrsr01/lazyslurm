@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-/// A compute node from `sinfo`.
+/// A compute node from `sinfo_t_idle`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Node {
     pub name: String,

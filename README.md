@@ -82,7 +82,7 @@ lazyslurm --user username
 lazyslurm --partition gpu
 ```
 
-The `Jobs` tab works without any extra setup. The `Nodes` and `Partitions` tabs use `sinfo`, and `History` uses `sacct` (which needs Slurm accounting enabled on the cluster).
+The `Jobs` tab works without any extra setup. The `Nodes` and `Partitions` tabs use `sinfo_t_idle`, and `History` uses `sacct` (which needs Slurm accounting enabled on the cluster).
 
 ### Keyboard Controls
 
@@ -141,7 +141,7 @@ cargo run
 just slurm_populate
 
 # Inspect the cluster
-just slurm_status    # squeue + sinfo
+just slurm_status    # squeue + sinfo_t_idle
 just slurm_prio      # sprio priority breakdown
 just slurm_share     # sshare fairshare usage
 just slurm_clear_jobs

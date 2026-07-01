@@ -1,10 +1,10 @@
 use serde::{Deserialize, Serialize};
 
-/// A partition from `sinfo -s`.
+/// A partition from `sinfo_t_idle`.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Partition {
     pub name: String,
-    /// Default partition (sinfo marks it with a trailing `*`).
+    /// Default partition (sinfo_t_idle marks it with a trailing `*`).
     pub is_default: bool,
     pub availability: String,
     pub nodes_alloc: u32,
