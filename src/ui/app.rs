@@ -265,7 +265,7 @@ impl App {
         match self.active_tab {
             ActiveTab::Jobs => {}
             ActiveTab::Nodes => self.start_nodes_refresh(),
-            ActiveTab::Partitions => self.start_partitions_refresh(),
+            ActiveTab::Partitions => {}
             ActiveTab::History => self.start_history_refresh(),
         }
     }
