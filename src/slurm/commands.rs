@@ -66,8 +66,7 @@ impl SlurmExecutor for SlurmProcess {
 
     async fn sinfo_nodes(&self) -> Result<String> {
         // host|state|cpus A/I/O/T|memory|free mem|gres|partition
-        let output = TokioCommand::new("sinfo")
-            .args(["-h", "-N", "-o", "%n|%T|%C|%m|%e|%G|%P"])
+        let output = TokioCommand::new("sinfo_t_idle")
             .output()
             .await
             .context("Failed to execute sinfo")?;
@@ -82,8 +81,7 @@ impl SlurmExecutor for SlurmProcess {
 
     async fn sinfo_partitions(&self) -> Result<String> {
         // partition|availability|nodes A/I/O/T|time limit
-        let output = TokioCommand::new("sinfo")
-            .args(["-h", "-s", "-o", "%P|%a|%F|%l"])
+        let output = TokioCommand::new("sinfo_t_idle")
             .output()
             .await
             .context("Failed to execute sinfo")?;
