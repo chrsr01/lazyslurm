@@ -7,11 +7,9 @@ pub trait SlurmExecutor: Send + Sync {
     async fn scontrol_show_job(&self, job_id: &str) -> Result<String>;
     async fn scancel(&self, job_id: &str) -> Result<()>;
 
-    /// Per-node listing for the Nodes tab (`sinfo -N`).
+    /// Per-node listing for the Nodes tab (`sinfo_t_idle`).
     async fn sinfo_nodes(&self) -> Result<String>;
 
-    /// Per-partition summary for the Partitions tab (`sinfo -s`).
-    async fn sinfo_partitions(&self) -> Result<String>;
 
     /// Finished-job accounting (`sacct`). Errors if accounting isn't configured.
     async fn sacct(&self, user: Option<&str>) -> Result<String>;

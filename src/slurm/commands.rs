@@ -69,26 +69,11 @@ impl SlurmExecutor for SlurmProcess {
         let output = TokioCommand::new("sinfo_t_idle")
             .output()
             .await
-            .context("Failed to execute sinfo")?;
+            .context("Failed to execute sinfo_t_idle")?;
 
         if !output.status.success() {
             let stderr = String::from_utf8_lossy(&output.stderr);
-            anyhow::bail!("sinfo failed: {}", stderr);
-        }
-
-        Ok(String::from_utf8_lossy(&output.stdout).to_string())
-    }
-
-    async fn sinfo_partitions(&self) -> Result<String> {
-        // partition|availability|nodes A/I/O/T|time limit
-        let output = TokioCommand::new("sinfo_t_idle")
-            .output()
-            .await
-            .context("Failed to execute sinfo")?;
-
-        if !output.status.success() {
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            anyhow::bail!("sinfo failed: {}", stderr);
+            anyhow::bail!("sinfo_t_idle failed: {}", stderr);
         }
 
         Ok(String::from_utf8_lossy(&output.stdout).to_string())

@@ -287,22 +287,6 @@ impl App {
         });
     }
 
-    pub fn start_partitions_refresh(&mut self) {
-        if self.partitions_loading {
-            return;
-        }
-        self.partitions_loading = true;
-        let executor = self.executor.clone();
-        let sender = self.event_sender.clone();
-        tokio::spawn(async move {
-            let result = executor
-                .sinfo_partitions()
-                .await
-                .map(|out| SlurmParser::parse_sinfo_partitions(&out))
-                .map_err(|e| e.to_string());
-            let _ = sender.send(AppEvent::PartitionsFetched(result));
-        });
-    }
 
     pub fn start_history_refresh(&mut self) {
         if self.history_loading {

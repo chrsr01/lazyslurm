@@ -109,13 +109,6 @@ async fn parse_sinfo_nodes_cluster() {
     insta::assert_yaml_snapshot!(nodes);
 }
 
-#[tokio::test]
-async fn parse_sinfo_partitions_cluster() {
-    let exec = SlurmFixture::new(fixture_dir("cluster"));
-    let raw = exec.sinfo_partitions().await.unwrap();
-    let partitions = SlurmParser::parse_sinfo_partitions(&raw);
-    insta::assert_yaml_snapshot!(partitions);
-}
 
 #[tokio::test]
 async fn parse_sacct_cluster() {

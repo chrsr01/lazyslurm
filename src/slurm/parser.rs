@@ -255,42 +255,6 @@ impl SlurmParser {
         nodes
     }
 
-    /// Parse `sinfo -s -o "%P|%a|%F|%l"`.
-    pub fn parse_sinfo_partitions(output: &str) -> Vec<Partition> {
-        let mut partitions = Vec::new();
-
-        for line in output.lines() {
-            let line = line.trim();
-            if line.is_empty() {
-                continue;
-            }
-
-            let f: Vec<&str> = line.split('|').collect();
-            if f.len() < 4 {
-                continue;
-            }
-
-            let raw_name = f[0].trim();
-            let is_default = raw_name.ends_with('*');
-            let name = raw_name.trim_end_matches('*').to_string();
-
-            let (nodes_alloc, nodes_idle, nodes_other, nodes_total) = parse_aiot(f[2]);
-
-            partitions.push(Partition {
-                name,
-                is_default,
-                availability: f[1].trim().to_string(),
-                nodes_alloc,
-                nodes_idle,
-                nodes_other,
-                nodes_total,
-                time_limit: f[3].trim().to_string(),
-            });
-        }
-
-        partitions
-    }
-
     /// Parse `sacct -X -n -P --format=JobID,JobName,State,ExitCode,Elapsed,Start,End`.
     pub fn parse_sacct(output: &str) -> Vec<AcctEntry> {
         let mut entries = Vec::new();
@@ -417,26 +381,6 @@ mod cluster_tests {
         assert_eq!(nodes.len(), 1, "the repeated node collapses to one row");
         assert_eq!(nodes[0].partition, "batch,gpu");
         assert_eq!(nodes[0].gres, None, "(null) gres maps to None");
-    }
-
-    #[test]
-    fn marks_the_default_partition_and_strips_the_star() {
-        let raw = "batch*|up|10/20/2/32|7-00:00:00\ngpu|down|0/0/4/4|1:00:00\n";
-        let parts = SlurmParser::parse_sinfo_partitions(raw);
-        assert_eq!(parts.len(), 2);
-        assert_eq!(parts[0].name, "batch");
-        assert!(parts[0].is_default);
-        assert_eq!(
-            (
-                parts[0].nodes_alloc,
-                parts[0].nodes_idle,
-                parts[0].nodes_total
-            ),
-            (10, 20, 32)
-        );
-        assert!(parts[0].is_up());
-        assert!(!parts[1].is_default);
-        assert!(!parts[1].is_up());
     }
 
     #[test]
