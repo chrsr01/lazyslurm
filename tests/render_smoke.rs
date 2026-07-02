@@ -2,7 +2,7 @@
 //! layout or unicode-width panic shows up here rather than only in a live
 //! terminal. They also pin that the right content reaches the screen.
 
-use lazyslurm::models::{AcctDetail, AcctEntry, Node, Partition};
+use lazyslurm::models::{AcctDetail, AcctEntry, Node};
 use lazyslurm::ui::{ActiveTab, App, AppState, render_app, tab_rects};
 use ratatui::{Terminal, backend::TestBackend, layout::Rect};
 
@@ -36,19 +36,6 @@ fn sample_node() -> Node {
     }
 }
 
-fn sample_partition() -> Partition {
-    Partition {
-        name: "batch".into(),
-        is_default: true,
-        availability: "up".into(),
-        nodes_alloc: 10,
-        nodes_idle: 20,
-        nodes_other: 2,
-        nodes_total: 32,
-        time_limit: "7-00:00:00".into(),
-    }
-}
-
 fn sample_entry() -> AcctEntry {
     AcctEntry {
         job_id: "1001".into(),
@@ -65,7 +52,7 @@ fn sample_entry() -> AcctEntry {
 fn tab_bar_shows_every_tab() {
     let app = App::new();
     let text = rendered_text(&app);
-    for label in ["Jobs", "Nodes", "Partitions", "History"] {
+    for label in ["Jobs", "Nodes", "History"] {
         assert!(text.contains(label), "tab bar missing {label}");
     }
 }
@@ -102,27 +89,13 @@ fn clicking_a_tab_label_hits_that_tab() {
 }
 
 #[test]
-fn nodes_tab_renders_node_row() {
+fn nodes_tab_renders_partition_row() {
     let mut app = App::new();
     app.active_tab = ActiveTab::Nodes;
     app.nodes = vec![sample_node()];
     let text = rendered_text(&app);
-    assert!(text.contains("gpu-node-01"));
-    assert!(text.contains("mixed"));
-    assert!(text.contains("gpu:a100:4"));
-}
-
-#[test]
-fn partitions_tab_marks_default_and_shows_limit() {
-    let mut app = App::new();
-    app.active_tab = ActiveTab::Partitions;
-    app.partitions = vec![sample_partition()];
-    let text = rendered_text(&app);
-    assert!(
-        text.contains("batch*"),
-        "default partition should carry the star"
-    );
-    assert!(text.contains("7-00:00:00"));
+    assert!(text.contains("gpu-node-01"), "partition name shown");
+    assert!(text.contains("mixed"), "status shown");
 }
 
 #[test]
@@ -273,7 +246,7 @@ fn raw_log_view_shows_plain_log() {
 #[test]
 fn cluster_tabs_render_when_empty() {
     // An empty list with no error must not panic and should show the hint.
-    for tab in [ActiveTab::Nodes, ActiveTab::Partitions] {
+    for tab in [ActiveTab::Nodes, ActiveTab::History] {
         let mut app = App::new();
         app.active_tab = tab;
         let _ = rendered_text(&app);

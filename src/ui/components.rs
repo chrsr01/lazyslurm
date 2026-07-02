@@ -70,7 +70,6 @@ pub fn render_app(frame: &mut Frame, app: &App) {
     match app.active_tab {
         ActiveTab::Jobs => render_jobs_dashboard(frame, app, chunks[1]),
         ActiveTab::Nodes => render_nodes_tab(frame, app, chunks[1]),
-        ActiveTab::Partitions => render_partitions_tab(frame, app, chunks[1]),
         ActiveTab::History => render_history_tab(frame, app, chunks[1]),
     }
 
@@ -217,7 +216,6 @@ fn tab_is_loading(app: &App) -> bool {
     match app.active_tab {
         ActiveTab::Jobs => app.is_loading,
         ActiveTab::Nodes => app.nodes_loading,
-        ActiveTab::Partitions => app.partitions_loading,
         ActiveTab::History => app.history_loading,
     }
 }
@@ -1111,58 +1109,6 @@ fn render_nodes_tab(frame: &mut Frame, app: &App, area: Rect) {
         &header,
         items,
         app.selected_node_index,
-        message,
-        area,
-    );
-}
-
-fn render_partitions_tab(frame: &mut Frame, app: &App, area: Rect) {
-    let header = format!("  {:<30}IDLE NODES", "PARTITION");
-
-    let items: Vec<ListItem> = app
-        .partitions
-        .iter()
-        .enumerate()
-        .map(|(i, part)| {
-            let (rail, base) = row_base(i == app.selected_partition_index);
-            let has_idle = part.nodes_idle > 0;
-            let color = if has_idle { theme::RUNNING } else { theme::MUTED };
-
-            let mut spans = vec![
-                rail,
-                Span::styled(
-                    format!("{:<30}", truncate(&part.name, 29)),
-                    base.fg(theme::FG),
-                ),
-            ];
-            spans.extend(mini_bar(
-                part.nodes_idle as usize,
-                part.nodes_idle.max(1) as usize,
-                6,
-                color,
-            ));
-            spans.push(Span::styled(
-                format!(" {}", part.nodes_idle),
-                base.fg(if has_idle { theme::FG } else { theme::MUTED }),
-            ));
-
-            ListItem::new(Line::from(spans)).style(base)
-        })
-        .collect();
-
-    let title = format!("Partitions ({})", app.partitions.len());
-    let message = cluster_message(
-        app.partitions_loading,
-        &app.partitions_error,
-        app.partitions.is_empty(),
-        "No partitions reported",
-    );
-    render_cluster_list(
-        frame,
-        &title,
-        &header,
-        items,
-        app.selected_partition_index,
         message,
         area,
     );

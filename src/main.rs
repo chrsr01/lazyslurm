@@ -32,14 +32,14 @@ use lazyslurm::ui::{App, events};
 "#,
     after_help = r#"Keyboard shortcuts:
   q: quit
-  Tab / 1-4: switch between Jobs, Nodes, Partitions, History
+  Tab / 1-3: switch between Jobs, Nodes, History
   ↑/↓ or j/k: navigate the current list
   r: refresh
   c: cancel selected job (Jobs tab)
 
 Notes:
   - Required tools: squeue, scontrol, scancel.
-  - Optional tools power the extra tabs: sinfo_t_idle (Nodes, Partitions) and
+  - Optional tools power the extra tabs: sinfo_t_idle (Nodes) and
     sacct (History). The History tab needs slurmdbd accounting enabled.
 "#
 )]

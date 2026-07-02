@@ -122,8 +122,7 @@ async fn event_normal_state(app: &mut App, key: KeyEvent) -> Result<Option<()>, 
         (KeyCode::BackTab, _) => app.prev_tab(),
         (KeyCode::Char('1'), _) => app.switch_tab(ActiveTab::Jobs),
         (KeyCode::Char('2'), _) => app.switch_tab(ActiveTab::Nodes),
-        (KeyCode::Char('3'), _) => app.switch_tab(ActiveTab::Partitions),
-        (KeyCode::Char('4'), _) => app.switch_tab(ActiveTab::History),
+        (KeyCode::Char('3'), _) => app.switch_tab(ActiveTab::History),
         (KeyCode::Left, _) | (KeyCode::Char('h'), _) if app.active_tab == ActiveTab::Jobs => {
             app.focus_left();
         }

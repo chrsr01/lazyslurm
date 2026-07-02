@@ -3,7 +3,7 @@ use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
 
-use crate::models::{AcctDetail, AcctEntry, Job, JobList, Node, Partition};
+use crate::models::{AcctDetail, AcctEntry, Job, JobList, Node};
 use crate::slurm::{SlurmExecutor, SlurmParser, SlurmProcess};
 
 #[derive(Debug)]
@@ -13,7 +13,6 @@ pub enum AppEvent {
         result: Result<Vec<Job>, String>,
     },
     NodesFetched(Result<Vec<Node>, String>),
-    PartitionsFetched(Result<Vec<Partition>, String>),
     HistoryFetched(Result<Vec<AcctEntry>, String>),
     // Boxed: AcctDetail is much larger than the other variants' payloads.
     HistoryDetailFetched(Result<Box<AcctDetail>, String>),
@@ -25,23 +24,16 @@ pub enum AppEvent {
 pub enum ActiveTab {
     Jobs,
     Nodes,
-    Partitions,
     History,
 }
 
 impl ActiveTab {
-    pub const ALL: [ActiveTab; 4] = [
-        ActiveTab::Jobs,
-        ActiveTab::Nodes,
-        ActiveTab::Partitions,
-        ActiveTab::History,
-    ];
+    pub const ALL: [ActiveTab; 3] = [ActiveTab::Jobs, ActiveTab::Nodes, ActiveTab::History];
 
     pub fn title(&self) -> &'static str {
         match self {
             ActiveTab::Jobs => "Jobs",
             ActiveTab::Nodes => "Nodes",
-            ActiveTab::Partitions => "Partitions",
             ActiveTab::History => "History",
         }
     }
@@ -110,16 +102,12 @@ pub struct App {
     pub active_tab: ActiveTab,
     pub nodes: Vec<Node>,
     pub selected_node_index: usize,
-    pub partitions: Vec<Partition>,
-    pub selected_partition_index: usize,
     pub history: Vec<AcctEntry>,
     pub selected_history_index: usize,
     pub nodes_loading: bool,
-    pub partitions_loading: bool,
     pub history_loading: bool,
     /// Per-view fetch error, shown in place of the list.
     pub nodes_error: Option<String>,
-    pub partitions_error: Option<String>,
     pub history_error: Option<String>,
     pub history_detail: Option<AcctDetail>,
     pub history_detail_id: Option<String>,
@@ -172,15 +160,11 @@ impl App {
             active_tab: ActiveTab::Jobs,
             nodes: Vec::new(),
             selected_node_index: 0,
-            partitions: Vec::new(),
-            selected_partition_index: 0,
             history: Vec::new(),
             selected_history_index: 0,
             nodes_loading: false,
-            partitions_loading: false,
             history_loading: false,
             nodes_error: None,
-            partitions_error: None,
             history_error: None,
             history_detail: None,
             history_detail_id: None,
@@ -265,7 +249,6 @@ impl App {
         match self.active_tab {
             ActiveTab::Jobs => {}
             ActiveTab::Nodes => self.start_nodes_refresh(),
-            ActiveTab::Partitions => {}
             ActiveTab::History => self.start_history_refresh(),
         }
     }
@@ -284,23 +267,6 @@ impl App {
                 .map(|out| SlurmParser::parse_sinfo_nodes(&out))
                 .map_err(|e| e.to_string());
             let _ = sender.send(AppEvent::NodesFetched(result));
-        });
-    }
-
-    pub fn start_partitions_refresh(&mut self) {
-        if self.partitions_loading {
-            return;
-        }
-        self.partitions_loading = true;
-        let executor = self.executor.clone();
-        let sender = self.event_sender.clone();
-        tokio::spawn(async move {
-            let result = executor
-                .sinfo_nodes()
-                .await
-                .map(|out| SlurmParser::parse_sinfo_t_idle(&out))
-                .map_err(|e| e.to_string());
-            let _ = sender.send(AppEvent::PartitionsFetched(result));
         });
     }
 
@@ -374,10 +340,6 @@ impl App {
             ActiveTab::Nodes => {
                 self.selected_node_index = next_index(self.selected_node_index, self.nodes.len())
             }
-            ActiveTab::Partitions => {
-                self.selected_partition_index =
-                    next_index(self.selected_partition_index, self.partitions.len())
-            }
             ActiveTab::History => {
                 self.selected_history_index =
                     next_index(self.selected_history_index, self.history.len())
@@ -390,9 +352,6 @@ impl App {
         match self.active_tab {
             ActiveTab::Nodes => {
                 self.selected_node_index = self.selected_node_index.saturating_sub(1)
-            }
-            ActiveTab::Partitions => {
-                self.selected_partition_index = self.selected_partition_index.saturating_sub(1)
             }
             ActiveTab::History => {
                 self.selected_history_index = self.selected_history_index.saturating_sub(1)
@@ -435,19 +394,6 @@ impl App {
                         Err(e) => self.nodes_error = Some(e),
                     }
                     self.nodes_loading = false;
-                }
-                AppEvent::PartitionsFetched(result) => {
-                    match result {
-                        Ok(partitions) => {
-                            self.partitions = partitions;
-                            self.selected_partition_index = self
-                                .selected_partition_index
-                                .min(self.partitions.len().saturating_sub(1));
-                            self.partitions_error = None;
-                        }
-                        Err(e) => self.partitions_error = Some(e),
-                    }
-                    self.partitions_loading = false;
                 }
                 AppEvent::HistoryFetched(result) => {
                     match result {
