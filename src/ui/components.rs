@@ -1070,10 +1070,7 @@ fn node_state_color(node: &Node) -> ratatui::style::Color {
 }
 
 fn render_nodes_tab(frame: &mut Frame, app: &App, area: Rect) {
-    let header = format!(
-        "  {:<18}{:<10}{:<14}{:<12}{:<20}PART",
-        "NODE", "STATE", "CPUS", "MEM f/t", "GPU"
-    );
+    let header = format!("  {:<28}{:<10}IDLE NODES", "PARTITION", "STATUS");
 
     let items: Vec<ListItem> = app
         .nodes
@@ -1086,34 +1083,14 @@ fn render_nodes_tab(frame: &mut Frame, app: &App, area: Rect) {
             let mut spans = vec![
                 rail,
                 Span::styled(
-                    format!("{:<18}", truncate(&node.name, 17)),
+                    format!("{:<28}", truncate(&node.name, 27)),
                     base.fg(theme::FG),
                 ),
                 Span::styled(format!("{:<10}", truncate(&node.state, 9)), base.fg(color)),
             ];
-            spans.extend(mini_bar(
-                node.cpus_alloc as usize,
-                node.cpus_total as usize,
-                6,
-                color,
-            ));
+            spans.extend(mini_bar(node.cpus_idle as usize, node.cpus_total as usize, 6, color));
             spans.push(Span::styled(
-                format!(" {:<7}", format!("{}/{}", node.cpus_alloc, node.cpus_total)),
-                base.fg(theme::MUTED),
-            ));
-            spans.push(Span::styled(
-                format!(
-                    "{:<12}",
-                    format!("{}/{}", fmt_gb(node.free_mem_mb), fmt_gb(node.memory_mb))
-                ),
-                base.fg(theme::MUTED),
-            ));
-            spans.push(Span::styled(
-                format!("{:<20}", truncate(node.gres.as_deref().unwrap_or("-"), 19)),
-                base.fg(theme::FG),
-            ));
-            spans.push(Span::styled(
-                truncate(&node.partition, 12),
+                format!(" {}", node.cpus_idle),
                 base.fg(theme::MUTED),
             ));
 
@@ -1140,10 +1117,7 @@ fn render_nodes_tab(frame: &mut Frame, app: &App, area: Rect) {
 }
 
 fn render_partitions_tab(frame: &mut Frame, app: &App, area: Rect) {
-    let header = format!(
-        "  {:<18}{:<8}{:<14}{:<10}TIMELIMIT",
-        "PARTITION", "AVAIL", "NODES", "i/t"
-    );
+    let header = format!("  {:<30}IDLE NODES", "PARTITION");
 
     let items: Vec<ListItem> = app
         .partitions
@@ -1151,36 +1125,26 @@ fn render_partitions_tab(frame: &mut Frame, app: &App, area: Rect) {
         .enumerate()
         .map(|(i, part)| {
             let (rail, base) = row_base(i == app.selected_partition_index);
-            let up = part.is_up();
-            let name = if part.is_default {
-                format!("{}*", part.name)
-            } else {
-                part.name.clone()
-            };
+            let has_idle = part.nodes_idle > 0;
+            let color = if has_idle { theme::RUNNING } else { theme::MUTED };
 
             let mut spans = vec![
                 rail,
-                Span::styled(format!("{:<18}", truncate(&name, 17)), base.fg(theme::FG)),
                 Span::styled(
-                    format!("{:<8}", part.availability),
-                    base.fg(if up { theme::RUNNING } else { theme::FAILED }),
+                    format!("{:<30}", truncate(&part.name, 29)),
+                    base.fg(theme::FG),
                 ),
             ];
             spans.extend(mini_bar(
                 part.nodes_idle as usize,
-                part.nodes_total as usize,
+                part.nodes_idle.max(1) as usize,
                 6,
-                theme::RUNNING,
+                color,
             ));
             spans.push(Span::styled(
-                format!(
-                    " {:<7}",
-                    format!("{}/{}", part.nodes_idle, part.nodes_total)
-                ),
-                base.fg(theme::MUTED),
+                format!(" {}", part.nodes_idle),
+                base.fg(if has_idle { theme::FG } else { theme::MUTED }),
             ));
-            spans.push(Span::styled(format!("{:<10}", ""), base.fg(theme::MUTED)));
-            spans.push(Span::styled(part.time_limit.clone(), base.fg(theme::FG)));
 
             ListItem::new(Line::from(spans)).style(base)
         })

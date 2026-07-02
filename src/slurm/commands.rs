@@ -65,7 +65,6 @@ impl SlurmExecutor for SlurmProcess {
     }
 
     async fn sinfo_nodes(&self) -> Result<String> {
-        // host|state|cpus A/I/O/T|memory|free mem|gres|partition
         let output = TokioCommand::new("sinfo_t_idle")
             .output()
             .await

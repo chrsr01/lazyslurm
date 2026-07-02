@@ -7,27 +7,6 @@ use crate::models::{AcctDetail, AcctEntry, Job, JobState, Node, Partition};
 
 pub struct SlurmParser;
 
-/// Parse an `allocated/idle/other/total` quadruple. Missing parts fall to zero.
-fn parse_aiot(field: &str) -> (u32, u32, u32, u32) {
-    let mut parts = field.split('/');
-    let mut next = || {
-        parts
-            .next()
-            .and_then(|p| p.trim().parse().ok())
-            .unwrap_or(0)
-    };
-    (next(), next(), next(), next())
-}
-
-/// sinfo_t_idle prints `(null)` or `N/A` for an absent value; map those to `None`.
-fn non_null(value: &str) -> Option<String> {
-    let v = value.trim();
-    if v.is_empty() || v == "(null)" || v.eq_ignore_ascii_case("N/A") {
-        None
-    } else {
-        Some(v.to_string())
-    }
-}
 
 impl SlurmParser {
     pub fn parse_squeue_output(output: &str) -> Result<Vec<Job>> {
@@ -209,50 +188,64 @@ impl SlurmParser {
         paths
     }
 
-    /// Parse `sinfo_t_idle` output. A node spanning several partitions is folded into one
-    /// row with the partition names joined.
-    pub fn parse_sinfo_nodes(output: &str) -> Vec<Node> {
-        let mut nodes: Vec<Node> = Vec::new();
+    /// Parse `sinfo_t_idle` output into partitions.
+    /// Each line has the form: `Partition <name> : <N> nodes idle`
+    pub fn parse_sinfo_t_idle(output: &str) -> Vec<Partition> {
+        let mut partitions = Vec::new();
 
         for line in output.lines() {
             let line = line.trim();
-            if line.is_empty() {
+            let Some(rest) = line.strip_prefix("Partition ") else {
                 continue;
-            }
-
-            let f: Vec<&str> = line.split('|').collect();
-            if f.len() < 7 {
+            };
+            let Some(colon) = rest.find(':') else {
                 continue;
-            }
+            };
+            let name = rest[..colon].trim().to_string();
+            let after_colon = rest[colon + 1..].trim();
+            let nodes_idle: u32 = after_colon
+                .split_whitespace()
+                .next()
+                .and_then(|n| n.parse().ok())
+                .unwrap_or(0);
 
-            let name = f[0].trim().to_string();
-            let partition = f[6].trim().to_string();
-
-            if let Some(existing) = nodes.iter_mut().find(|n| n.name == name) {
-                if !existing.partition.split(',').any(|p| p == partition) {
-                    existing.partition.push(',');
-                    existing.partition.push_str(&partition);
-                }
-                continue;
-            }
-
-            let (cpus_alloc, cpus_idle, cpus_other, cpus_total) = parse_aiot(f[2]);
-
-            nodes.push(Node {
+            partitions.push(Partition {
                 name,
-                state: f[1].trim().to_string(),
-                cpus_alloc,
-                cpus_idle,
-                cpus_other,
-                cpus_total,
-                memory_mb: f[3].trim().parse().ok(),
-                free_mem_mb: f[4].trim().parse().ok(),
-                gres: non_null(f[5]),
-                partition,
+                is_default: false,
+                availability: "up".to_string(),
+                nodes_alloc: 0,
+                nodes_idle,
+                nodes_other: 0,
+                nodes_total: 0,
+                time_limit: String::new(),
             });
         }
 
-        nodes
+        partitions
+    }
+
+    /// Convert a `sinfo_t_idle` partition summary into synthetic `Node` entries
+    /// (one per partition) so the Nodes tab can display idle counts.
+    pub fn parse_sinfo_nodes(output: &str) -> Vec<Node> {
+        Self::parse_sinfo_t_idle(output)
+            .into_iter()
+            .map(|p| Node {
+                state: if p.nodes_idle > 0 {
+                    "idle".to_string()
+                } else {
+                    "empty".to_string()
+                },
+                cpus_idle: p.nodes_idle,
+                cpus_total: p.nodes_idle,
+                partition: p.name.clone(),
+                name: p.name,
+                cpus_alloc: 0,
+                cpus_other: 0,
+                memory_mb: None,
+                free_mem_mb: None,
+                gres: None,
+            })
+            .collect()
     }
 
     /// Parse `sacct -X -n -P --format=JobID,JobName,State,ExitCode,Elapsed,Start,End`.
@@ -358,29 +351,32 @@ mod cluster_tests {
     use super::*;
 
     #[test]
-    fn parses_node_cpu_memory_and_gres() {
-        let raw = "node01|mixed|12/20/0/32|257000|120000|gpu:a100:4|gpu\n";
-        let nodes = SlurmParser::parse_sinfo_nodes(raw);
-        assert_eq!(nodes.len(), 1);
-        let n = &nodes[0];
-        assert_eq!(n.name, "node01");
-        assert_eq!(
-            (n.cpus_alloc, n.cpus_idle, n.cpus_other, n.cpus_total),
-            (12, 20, 0, 32)
-        );
-        assert_eq!(n.memory_mb, Some(257000));
-        assert_eq!(n.free_mem_mb, Some(120000));
-        assert_eq!(n.gres.as_deref(), Some("gpu:a100:4"));
+    fn parses_sinfo_t_idle_partition_lines() {
+        let raw = "Partition gpu                     :      5 nodes idle\n\
+                   Partition cpu                     :      1 nodes idle\n\
+                   Partition large                   :      0 nodes idle\n";
+        let partitions = SlurmParser::parse_sinfo_t_idle(raw);
+        assert_eq!(partitions.len(), 3);
+        assert_eq!(partitions[0].name, "gpu");
+        assert_eq!(partitions[0].nodes_idle, 5);
+        assert_eq!(partitions[1].name, "cpu");
+        assert_eq!(partitions[1].nodes_idle, 1);
+        assert_eq!(partitions[2].name, "large");
+        assert_eq!(partitions[2].nodes_idle, 0);
     }
 
     #[test]
-    fn folds_a_node_listed_in_several_partitions() {
-        let raw = "node01|idle|0/32/0/32|257000|250000|(null)|batch\n\
-                   node01|idle|0/32/0/32|257000|250000|(null)|gpu\n";
+    fn parse_sinfo_nodes_produces_synthetic_nodes() {
+        let raw = "Partition gpu                     :      3 nodes idle\n\
+                   Partition cpu                     :      0 nodes idle\n";
         let nodes = SlurmParser::parse_sinfo_nodes(raw);
-        assert_eq!(nodes.len(), 1, "the repeated node collapses to one row");
-        assert_eq!(nodes[0].partition, "batch,gpu");
-        assert_eq!(nodes[0].gres, None, "(null) gres maps to None");
+        assert_eq!(nodes.len(), 2);
+        assert_eq!(nodes[0].name, "gpu");
+        assert_eq!(nodes[0].state, "idle");
+        assert_eq!(nodes[0].cpus_idle, 3);
+        assert_eq!(nodes[1].name, "cpu");
+        assert_eq!(nodes[1].state, "empty");
+        assert_eq!(nodes[1].cpus_idle, 0);
     }
 
     #[test]
