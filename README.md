@@ -7,8 +7,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/hill/lazyslurm/actions"><img src="https://github.com/hill/lazyslurm/workflows/CI/badge.svg" alt="CI"></a>
-  <a href="https://crates.io/crates/lazyslurm"><img src="https://img.shields.io/crates/v/lazyslurm.svg" alt="Crates.io"></a>
+  <a href="https://github.com/chrsr01/lazyslurm/actions"><img src="https://github.com/chrsr01/lazyslurm/workflows/CI/badge.svg" alt="CI"></a>
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
 </p>
 
@@ -22,51 +21,55 @@ Slurm's CLI is powerful but clunky for monitoring.
 This gives you the lazygit experience for your cluster.
 Built in Rust with [ratatui](https://ratatui.rs/) and released as a single binary.
 
+This is a fork of [hill/lazyslurm](https://github.com/hill/lazyslurm) that removes the
+`sinfo` partitions view and adapts node listing to `sinfo_t_idle` output, because some
+HPC clusters (e.g. HoreKa) restrict the raw `sinfo` command for regular users. It is not
+published to crates.io or Homebrew — install from a [GitHub Release](https://github.com/chrsr01/lazyslurm/releases)
+below.
+
 ## Features
 
 - Monitor your jobs with live log tailing, job details and ability to cancel jobs
 - See per-node state, CPU load, free memory and GPU (gres) allocation across the cluster
-- Partition availability, idle/allocated nodes and time limits.
 - See finished jobs from `sacct` with details
+- Automatic refresh every 2 minutes; press `r` any time to refresh immediately
 
 ## Installation
 
 ### Binary Releases
 
-Download the latest binary for your platform from [GitHub Releases](https://github.com/hill/lazyslurm/releases):
+Download the latest binary for your platform from [GitHub Releases](https://github.com/chrsr01/lazyslurm/releases):
 
 ```bash
-# Linux x64
-curl -L https://github.com/hill/lazyslurm/releases/latest/download/lazyslurm-linux-x64.tar.gz | tar xz
+# Linux x64 (musl, statically linked — recommended for HPC clusters with
+# mismatched glibc versions across login/compute nodes, e.g. HoreKa)
+curl -L https://github.com/chrsr01/lazyslurm/releases/latest/download/lazyslurm-x86_64-unknown-linux-musl.tar.gz | tar xz
+mv lazyslurm ~/.local/bin/   # or: sudo mv lazyslurm /usr/local/bin/
+
+# Linux x64 (glibc)
+curl -L https://github.com/chrsr01/lazyslurm/releases/latest/download/lazyslurm-x86_64-unknown-linux-gnu.tar.gz | tar xz
 sudo mv lazyslurm /usr/local/bin/
 
 # macOS (Apple Silicon)
-curl -L https://github.com/hill/lazyslurm/releases/latest/download/lazyslurm-macos-arm64.tar.gz | tar xz
+curl -L https://github.com/chrsr01/lazyslurm/releases/latest/download/lazyslurm-aarch64-apple-darwin.tar.gz | tar xz
 sudo mv lazyslurm /usr/local/bin/
 
 # macOS (Intel)
-curl -L https://github.com/hill/lazyslurm/releases/latest/download/lazyslurm-macos-x64.tar.gz | tar xz
+curl -L https://github.com/chrsr01/lazyslurm/releases/latest/download/lazyslurm-x86_64-apple-darwin.tar.gz | tar xz
 sudo mv lazyslurm /usr/local/bin/
+
+# Windows: download lazyslurm-x86_64-pc-windows-msvc.zip from the releases page
 ```
 
-### Homebrew
+Each asset has a matching `.sha256` checksum file alongside it.
+
+### Cargo (build from source)
+
+If you have [Rust installed](https://rustup.rs/), install straight from this fork
+(the crates.io `lazyslurm` package is upstream's, without the `sinfo_t_idle` patch):
 
 ```bash
-brew install hill/tap/lazyslurm
-```
-
-### Cargo
-
-If you have [Rust installed](https://rustup.rs/):
-
-```bash
-cargo install lazyslurm
-```
-
-### Gah
-
-```sh
-gah install hill/lazyslurm
+cargo install --git https://github.com/chrsr01/lazyslurm --tag v0.3.2
 ```
 
 ## Usage
@@ -82,7 +85,7 @@ lazyslurm --user username
 lazyslurm --partition gpu
 ```
 
-The `Jobs` tab works without any extra setup. The `Nodes` and `Partitions` tabs use `sinfo_t_idle`, and `History` uses `sacct` (which needs Slurm accounting enabled on the cluster).
+The `Jobs` tab works without any extra setup. The `Nodes` tab uses `sinfo_t_idle`, and `History` uses `sacct` (which needs Slurm accounting enabled on the cluster).
 
 ### Keyboard Controls
 
@@ -92,9 +95,9 @@ The `Jobs` tab works without any extra setup. The `Nodes` and `Partitions` tabs 
 |-----|--------|
 | `q` / `Ctrl+C` | Quit |
 | `Tab` / `Shift+Tab` | Switch tabs |
-| `1`–`4` | Jump to a tab |
+| `1`–`3` | Jump to a tab |
 | `↑/↓` or `j/k` | Navigate the current list |
-| `r` | Refresh |
+| `r` | Refresh immediately (also refreshes automatically every 2 minutes) |
 | `u` | Filter by user |
 
 **Jobs tab**
