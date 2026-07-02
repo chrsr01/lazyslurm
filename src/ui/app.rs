@@ -139,7 +139,7 @@ impl App {
             current_user: std::env::var("USER").ok(),
             current_partition: None,
             last_refresh: Instant::now(),
-            refresh_interval: Duration::from_secs(2),
+            refresh_interval: Duration::from_secs(120),
             is_loading: false,
             error_message: None,
             event_sender,
