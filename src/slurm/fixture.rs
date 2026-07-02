@@ -48,7 +48,7 @@ impl SlurmExecutor for SlurmFixture {
         std::fs::read_to_string(&path)
             .with_context(|| format!("Failed to read fixture: {}", path.display()))
     }
-    
+
     async fn sacct(&self, _user: Option<&str>) -> Result<String> {
         let path = self.fixture_dir.join("sacct.txt");
         std::fs::read_to_string(&path)

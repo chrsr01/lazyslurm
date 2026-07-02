@@ -1045,14 +1045,6 @@ fn mini_bar(
     ]
 }
 
-/// Megabytes to a compact whole-GB string, e.g. `245G`. `None` becomes `-`.
-fn fmt_gb(mb: Option<u64>) -> String {
-    match mb {
-        Some(mb) => format!("{}G", mb / 1024),
-        None => "-".to_string(),
-    }
-}
-
 fn node_state_color(node: &Node) -> ratatui::style::Color {
     if node.is_unavailable() {
         return theme::FAILED;
@@ -1086,7 +1078,12 @@ fn render_nodes_tab(frame: &mut Frame, app: &App, area: Rect) {
                 ),
                 Span::styled(format!("{:<10}", truncate(&node.state, 9)), base.fg(color)),
             ];
-            spans.extend(mini_bar(node.cpus_idle as usize, node.cpus_total as usize, 6, color));
+            spans.extend(mini_bar(
+                node.cpus_idle as usize,
+                node.cpus_total as usize,
+                6,
+                color,
+            ));
             spans.push(Span::styled(
                 format!(" {}", node.cpus_idle),
                 base.fg(theme::MUTED),

@@ -7,7 +7,6 @@ use crate::models::{AcctDetail, AcctEntry, Job, JobState, Node, Partition};
 
 pub struct SlurmParser;
 
-
 impl SlurmParser {
     pub fn parse_squeue_output(output: &str) -> Result<Vec<Job>> {
         let mut jobs = Vec::new();

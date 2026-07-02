@@ -10,7 +10,6 @@ pub trait SlurmExecutor: Send + Sync {
     /// Per-node listing for the Nodes tab (`sinfo_t_idle`).
     async fn sinfo_nodes(&self) -> Result<String>;
 
-
     /// Finished-job accounting (`sacct`). Errors if accounting isn't configured.
     async fn sacct(&self, user: Option<&str>) -> Result<String>;
 
